@@ -41,7 +41,7 @@ def se_block(x, filters, reduction=8):
 
 
 
-def get_student_model():
+def get_student_model(logits=True):
     inputs = keras.Input(shape=(19, 19, PLANES), name='board')
     x = layers.Conv2D(64, 3, padding='same', use_bias=False, kernel_regularizer=regularizers.l2(1e-4))(inputs)
     x = layers.BatchNormalization()(x)
@@ -62,7 +62,12 @@ def get_student_model():
 
     p = layers.Conv2D(1, 1, padding='same', use_bias=True, kernel_regularizer=regularizers.l2(1e-4))(x)
     p = layers.Flatten()(p)
-    policy = layers.Activation('linear', name='policy', dtype='float32')(p)
+    
+    if logits:
+        policy = layers.Activation('linear', name='policy', dtype='float32')(p)
+    else:
+        policy_logits = layers.Activation('linear', name='policy_logits', dtype='float32')(p)
+        policy = layers.Softmax(name='policy', dtype='float32')(policy_logits)
 
     v = layers.GlobalAveragePooling2D()(x)
     v = layers.Dense(48, kernel_regularizer=regularizers.l2(1e-4))(v)
